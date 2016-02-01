@@ -5,21 +5,37 @@ var Position = require('./position.ts').Position;
 var Direction = require('./direction.ts').Direction;
 var Keys = require('./inputs.ts').Keys;
 
-var equalTo = function(expected) {
-  return function(actual) {
-    return actual === expected;
+var equalTo = function(expectedValue) {
+  return function(value) {
+    return value === expectedValue;
   };
 };
 
 function snakeHeadPosition(initialSnakeHeadPosition, keyPresses) {
-  var ups = keyPresses.filter(equalTo(Keys.UP));
+  var leftTurns = keyPresses.filter(equalTo(Keys.LEFT)).map(function() {
+    return Direction.turnLeft;
+  });
 
-  var headPosition = ups.scan(initialSnakeHeadPosition, function(headPosition, upKeyPress) {
-    return headPosition.advance(Direction.up());
+  var rightTurns = keyPresses.filter(equalTo(Keys.RIGHT)).map(function() {
+    return Direction.turnRight;
+  });
+
+  var turns = leftTurns.merge(rightTurns);
+
+  var directionFacing = turns.scan(Direction.up(), function(lastDirection, turn) {
+    return turn(lastDirection);
+  });
+
+  var forwardTick = keyPresses.filter(equalTo(Keys.UP));
+
+  var directionFacingOnForwardTick = directionFacing.sampledBy(forwardTick);
+
+  var headPosition = directionFacingOnForwardTick.scan(initialSnakeHeadPosition, function(currentPosition, direction) {
+    return currentPosition.advance(direction);
   });
 
   return headPosition;
-};
+}
 
 function snake(width, height, keyPresses) {
   var initialPosition = Position.at(3, 5);
@@ -30,9 +46,8 @@ function snake(width, height, keyPresses) {
     tail: Bacon.constant([]),
     food: null
   });
-
   return snakeRenderData;
-};
+}
 
 module.exports = {
   snake: snake
