@@ -7,13 +7,24 @@ Bacon = require('baconjs')
 
 # Returns a stream or property of snake head positions
 snakeHeadPosition = (initialSnakeHeadPosition, keyPresses) ->
-  equalTo = (expected) ->
-    return (actual) -> actual == expected
+  equalTo = (expectedValue) ->
+    return (value) -> value == expectedValue
 
-  ups = keyPresses.filter(equalTo(Keys.UP))
+  leftTurns = keyPresses.filter(equalTo(Keys.LEFT)).map(-> Direction.turnLeft)
+  rightTurns = keyPresses.filter(equalTo(Keys.RIGHT)).map(-> Direction.turnRight)
 
-  headPosition = ups.scan initialSnakeHeadPosition, (headPosition, upKeyPress) ->
-    return headPosition.advance(Direction.up())
+  turns = leftTurns.merge(rightTurns)
+
+  directionFacing = turns.scan Direction.up(), (lastDirection, turn) ->
+    return turn(lastDirection)
+
+  forwardTick = keyPresses.filter(equalTo(Keys.UP))
+
+  directionFacingOnForwardTick = directionFacing.sampledBy(forwardTick)
+
+  headPosition =
+    directionFacingOnForwardTick.scan initialSnakeHeadPosition, (currentPosition, direction) ->
+      return currentPosition.advance(direction)
 
   return headPosition
 
