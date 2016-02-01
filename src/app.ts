@@ -6,7 +6,7 @@ import * as $ from 'jquery'
 
 import { keyPresses } from './inputs.ts'
 import { grid } from './view.ts'
-import { snake } from './snake.ts';
+const { snake } = require('./snake.js');
 import { vdomBaconjsRenderer } from './virtual-dom-renderer.ts'
 
 const WIDTH = 10;
